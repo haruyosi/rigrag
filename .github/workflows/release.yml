@@ -17,7 +17,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact_name: my-project-linux
           - os: macos-latest
-            target: x86_64-apple-darwin
+            target: aarch64-apple-darwin
             artifact_name: my-project-macos
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -40,7 +40,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          file: "target/${{ matrix.target }}/release/rigrag*"
+          file_glob: true
           asset_name: ${{ matrix.artifact_name }}
           tag: ${{ github.ref }}
           overwrite: true
