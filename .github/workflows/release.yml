@@ -9,6 +9,7 @@ jobs:
   build-and-release:
     name: Build and Release
     runs-on: ${{ matrix.os }}
+    fail-fast: false
     strategy:
       matrix:
         include:
