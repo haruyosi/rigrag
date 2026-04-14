@@ -9,8 +9,8 @@ jobs:
   build-and-release:
     name: Build and Release
     runs-on: ${{ matrix.os }}
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -30,6 +30,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: stable
           targets: ${{ matrix.target }}
 
       - name: Build
