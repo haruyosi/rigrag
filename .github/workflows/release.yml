@@ -1,5 +1,8 @@
 name: Release
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
@@ -16,12 +19,15 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact_name: my-project-linux
+            extension: ""
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact_name: my-project-macos
+            extension: ""
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: my-project-windows.exe
+            artifact_name: my-project-windows
+            extension: ".exe"
 
     steps:
       - name: Checkout code
@@ -35,14 +41,19 @@ jobs:
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
+      
+      - name: trace
+        run: find . -type f
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          file: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}${{ matrix.extension }}
           tag: ${{ github.ref }}
           overwrite: true
