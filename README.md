@@ -181,21 +181,7 @@ After startup, enter your question at the prompt. The following commands are ava
 
 If the LLM supports tool calling, calculation tools and search tools are invoked automatically when needed.
 
-### 3. One-shot queries
-
-Use `-q/--query` to ask a single question, print the result, and exit. This is useful for batch processing.
-
-```bash
-cargo run -- <target-directory> -q "your question"
-```
-
-Example:
-
-```bash
-cargo run -- . -q "Summarize the design policy in this folder"
-```
-
-### 4. Query input via pipe
+### 3. Query input via pipe
 
 You can also pass a question through standard input. This is useful in scripts or when consuming the output of another tool.
 
@@ -213,7 +199,6 @@ cat questions.txt | cargo run -- .
 
 - `--init`: rebuild the index
 - `-p, --picture`: enable image processing, which requires a vision-capable model
-- `-q, --query <TEXT>`: run a one-shot query
 - `-u, --url <URL>`: Ollama API URL, default `http://localhost:11434`
 - `-e, --embedding-model <NAME>`: embedding model, default `nomic-embed-text-v2-moe`
 - `--embedding-thread <N>`: number of embedding threads, default `4`
