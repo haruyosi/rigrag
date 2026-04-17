@@ -43,13 +43,13 @@ pub async fn chat(
 
     let model_info = ollama.show_model_info(model.clone()).await?;
     let opt_tool = model_info.capabilities.iter().find(|&c| c == "tools");
+    let opt_think = model_info.capabilities.iter().find(|&c| c == "thinking");
+    println!("model: {}, capabilities: {:?}", model, model_info.capabilities);
 
     // 1. 会話履歴を保持するベクタを用意（最初のシステムコマンドを入れておく）
     let mut history: Vec<ChatMessage> = vec![ChatMessage::system(config.system.clone())];
 
     let tools = create_ollama_tools().await;
-
-    // let mut flg_show_score = true;
 
     println!("--- if type 'exit' to quit, 'clear' to clear history ---");
     println!();
@@ -78,6 +78,7 @@ pub async fn chat(
                             .to_string();
                         println!("Searching DB. \"{}\"", tool_input);
                         let index_results = search_db(&tool_input, config, index_db).await?;
+                        db_refs.extend(index_results.clone());
                         for (_, text, _, _) in &index_results {
                             history.push(ChatMessage::tool(format!("search result: {}", text)));
                         }
@@ -148,11 +149,16 @@ pub async fn chat(
                     continue;
                 }
 
-                let index_results = search_db(&input, config, index_db).await?;
-                db_refs.extend(index_results.clone());
-                // Add search results to conversation history for the model
-                for (_, text, _, _) in &index_results {
-                    history.push(ChatMessage::tool(format!("search result: {}", text)));
+                match opt_tool{
+                    Some(_) => {},
+                    None => {
+                        let index_results = search_db(&input, config, index_db).await?;
+                        db_refs.extend(index_results.clone());
+                        // Add search results to conversation history for the model
+                        for (_, text, _, _) in &index_results {
+                            history.push(ChatMessage::user(format!("search result: {}", text)));
+                        }
+                    },
                 }
                 // 2. ユーザーの発言を履歴に追加
                 history.push(ChatMessage::user(input.to_string()));
@@ -161,12 +167,19 @@ pub async fn chat(
 
         // 3. リクエスト作成（履歴全体を渡す）
         let request = match opt_tool {
-            Some(_) => ChatMessageRequest::new(model.clone(), history.clone())
-                .options(ModelOptions::default().temperature(config.temperature as f32))
-                .think(ThinkType::High)
-                .tools(tools.clone()),
+            Some(_) => {
+                let mut request = ChatMessageRequest::new(model.clone(), history.clone())
+                    .options(ModelOptions::default().temperature(config.temperature as f32))
+                    .tools(tools.clone());
+                match opt_think {
+                    Some(_) => {
+                        request = request.think(ThinkType::High);
+                    }
+                    None => {}
+                }
+                request
+            },
             None => ChatMessageRequest::new(model.clone(), history.clone())
-                .think(ThinkType::High)
                 .options(ModelOptions::default().temperature(config.temperature as f32)),
         };
         let mut stream = ollama.send_chat_messages_stream(request).await?;
